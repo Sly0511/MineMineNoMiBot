@@ -4,3 +4,4 @@ pymongo
 motor
 beanie==1.16.7
 Python-NBT
+pysftp

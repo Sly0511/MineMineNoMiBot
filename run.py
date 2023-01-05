@@ -7,7 +7,8 @@ from discord.ext.commands import AutoShardedBot
 from motor.motor_asyncio import AsyncIOMotorClient
 from toml import load
 
-from utils.database.models import Config
+from utils.database.models import Config, Guild, User, Member
+from utils.database.models.mineminenomi import Player
 from utils.modules import Module
 
 
@@ -24,7 +25,7 @@ class PyBot(AutoShardedBot):
     def load_config(self):
         self.config = Config(**load("config.toml"))
 
-    async def handle_prefix(self):
+    async def handle_prefix(self, bot, message):
         return self.config.bot.prefix
 
     def get_intents(self):
@@ -33,7 +34,13 @@ class PyBot(AutoShardedBot):
     async def start_database(self):
         client = AsyncIOMotorClient()
         await init_beanie(
-            database=getattr(client, self.config.database.name), document_models=[]
+            database=getattr(client, self.config.database.name),
+            document_models=[
+                Guild,
+                User,
+                Member,
+                Player
+            ]
         )
         print("Started database")
 

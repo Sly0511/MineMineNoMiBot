@@ -3,6 +3,20 @@ from pathlib import Path
 from asyncio import sleep
 from python_nbt.nbt import read_from_nbt_file
 from utils.mineminenomi import NBTParser
+from pysftp import Connection, CnOpts
+
+
+class FTPHandler:
+    def __init__(self, ftp_config):
+        cnopts = CnOpts()
+        cnopts.hostkeys = None
+        self.client = Connection(
+            host=ftp_config.host,
+            port=ftp_config.port,
+            username=ftp_config.user,
+            password=ftp_config.password,
+            cnopts=cnopts
+        )
 
 
 class GameTasks(commands.Cog):
@@ -11,31 +25,33 @@ class GameTasks(commands.Cog):
         self.cache_folder = Path("cache")
         self.player_cache_folder = self.cache_folder.joinpath("player")
         self.game_cache_folder = self.cache_folder.joinpath("game")
-        self.setup()
+
+    async def cog_load(self):
+        self.cache_folder.mkdir(parents=True, exist_ok=True)
+        self.player_cache_folder.mkdir(parents=True, exist_ok=True)
+        self.game_cache_folder.mkdir(parents=True, exist_ok=True)
+        await self.download_data()
+        self.start_tasks()
 
     async def cog_unload(self):
         self.player_data.cancel()
         self.game_data.cancel()
-
-    def setup(self):
-        self.cache_folder.mkdir(parents=True, exist_ok=True)
-        self.player_cache_folder.mkdir(parents=True, exist_ok=True)
-        self.game_cache_folder.mkdir(parents=True, exist_ok=True)
-        self.download_data()
-        self.start_tasks()
 
     def start_tasks(self):
         self.retrieve_data.start()
         self.game_data.start()
         self.player_data.start()
 
-    def download_data(self):
-        ...
+    async def download_data(self):
+        ftp = FTPHandler(self.bot.config.mineminenomi.ftp)
+        with ftp.client as sftp:
+            with sftp.cd():
+                print(list(sftp.listdir()))
 
     @tasks.loop(seconds=1)
     async def retrieve_data(self):
         await sleep(300)
-        self.download_data()
+        await self.download_data()
 
     @tasks.loop(minutes=3)
     async def game_data(self):
