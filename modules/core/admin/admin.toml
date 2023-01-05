@@ -1,0 +1,4 @@
+name = "Administrator Tools"
+description = "Contains utilities and commands for the bot's administration"
+enabled = true
+priority = 8

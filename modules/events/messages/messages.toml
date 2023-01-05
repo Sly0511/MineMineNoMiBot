@@ -1,0 +1,4 @@
+name = "Message Events"
+description = "Handles the flow of messages"
+enabled = true
+priority = 9

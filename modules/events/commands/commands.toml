@@ -1,0 +1,4 @@
+name = "Command Events"
+description = "Handles the commands events"
+enabled = false
+priority = 8

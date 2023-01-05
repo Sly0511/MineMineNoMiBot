@@ -1,0 +1,4 @@
+name = "Game Tasks"
+description = "Runs the tasks to get game's data"
+enabled = true
+priority = 8

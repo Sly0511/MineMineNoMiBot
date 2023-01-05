@@ -1,0 +1,6 @@
+discord.py==2.1.0
+pydantic
+pymongo
+motor
+beanie==1.16.7
+Python-NBT

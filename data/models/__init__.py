@@ -1,0 +1,1 @@
+from .devil_fruit import DevilFruit
