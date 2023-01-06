@@ -1,0 +1,30 @@
+[bot]
+    token = "DISCORD BOT TOKEN HERE"
+    prefix = "!"
+    owners = [ # Owners of the bot
+        0,
+        1
+    ]
+    admins = [ # Administrators of the bot
+        0,
+        1
+    ]
+    blacklist = [ # Blacklisted users from using the bot
+        0,
+        1
+    ]
+
+[database] # Database configuration
+    name = "PyBot"
+
+[mineminenomi] # Configuration of mineminenomi mod
+    [mineminenomi.ftp] # FTP Connection
+        host = "ftpserver.com"
+        port = 22
+        user = "username"
+        password = "password"
+
+    [mineminenomi.rcon] # Rcon Connection
+        host = "play.server.com"
+        port = 30130
+        password = "password"

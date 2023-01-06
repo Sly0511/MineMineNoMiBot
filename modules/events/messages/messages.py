@@ -13,8 +13,10 @@ class MessageEvents(commands.Cog):
             await self.process_command(ctx.message)
 
     @commands.Cog.listener("on_message_edit")
-    async def on_message_edit(self, message):
-        ctx: commands.Context = await self.bot.get_context(message)
+    async def on_message_edit(self, before, after):
+        if before.content == after.content:
+            return
+        ctx: commands.Context = await self.bot.get_context(after)
         if await self.can_run(ctx):
             await self.process_command(ctx.message)
 

@@ -4,6 +4,7 @@ from asyncio import sleep
 from python_nbt.nbt import read_from_nbt_file
 from utils.mineminenomi import NBTParser
 from pysftp import Connection, CnOpts
+from datetime import datetime, timedelta
 
 
 class FTPHandler:
@@ -43,10 +44,23 @@ class GameTasks(commands.Cog):
         self.player_data.start()
 
     async def download_data(self):
+        time = datetime.utcnow()
         ftp = FTPHandler(self.bot.config.mineminenomi.ftp)
+        return
         with ftp.client as sftp:
-            with sftp.cd():
-                print(list(sftp.listdir()))
+            with sftp.cd("World/playerdata/"):
+                sftp.get('mineminenomi.dat', self.game_cache_folder.joinpath('mineminenomi.dat'))
+                self.bot.logger.debug("Downloaded 'mineminenomi.dat' from the server.")
+            with sftp.cd('World/data/'):
+                for file in sftp.listdir_attr():
+                    filepath = Path(file.filename)
+                    if filepath.suffix in ('.dat', '.json'):
+                        continue
+                    if self.player_cache_folder.joinpath(filepath.name).exists():
+                        if time - timedelta(minutes=5) > datetime.utcfromtimestamp(file.st_mtime):
+                            continue
+                    sftp.get(filepath.name, self.player_cache_folder.joinpath(filepath.name))
+                    self.bot.logger.debug(f"Downloaded '{filepath.name}' from the server.")
 
     @tasks.loop(seconds=1)
     async def retrieve_data(self):

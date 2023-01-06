@@ -10,10 +10,13 @@ from toml import load
 from utils.database.models import Config, Guild, User, Member
 from utils.database.models.mineminenomi import Player
 from utils.modules import Module
+from utils.logger import Logger
+from json import dumps
 
 
 class PyBot(AutoShardedBot):
     def __init__(self):
+        self.logger = Logger()
         self.config = None
         self.modules = []
         self.load_config()
@@ -24,6 +27,8 @@ class PyBot(AutoShardedBot):
 
     def load_config(self):
         self.config = Config(**load("config.toml"))
+        self.logger.debug("Successfully loaded configuration: " + dumps(self.config.json()))
+        self.logger.debug("Config: ")
 
     async def handle_prefix(self, bot, message):
         return self.config.bot.prefix
@@ -42,22 +47,22 @@ class PyBot(AutoShardedBot):
                 Player
             ]
         )
-        print("Started database")
+        self.logger.info("Database initialized")
 
     async def load_modules(self):
         modules_path = Path("modules")
         for module in modules_path.rglob("*.py"):
             try:
                 module = Module.create(module)
-            except FileNotFoundError as e:
-                print(f"Skipped loading module in \"{module}\": {e}")
+            except FileNotFoundError as err:
+                print(f"Skipped loading module in \"{module}\": {err}")
                 continue
             self.modules.append(module)
         self.modules.sort(key=lambda x: x.info.priority)
         for module in self.modules:
             if module.info.enabled:
                 await self.load_extension(module.spec)
-                print(f"Loaded {module.info.name}")
+                self.logger.info(f"Loaded {module.info.name}")
 
     async def setup_hook(self):
         self.load_config()
@@ -69,7 +74,7 @@ class PyBot(AutoShardedBot):
 if __name__ == "__main__":
     bot = PyBot()
     try:
-        bot.run(bot.config.bot.token, reconnect=True)
+        bot.run(bot.config.bot.token, reconnect=True, )
     except LoginFailure as e:
         print(
             f"Error: {e}\nCouldn't connect to Discord, are you sure you put a valid token in config.toml?"

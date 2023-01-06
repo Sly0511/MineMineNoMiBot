@@ -19,10 +19,18 @@ class HistoryEntry(BaseModel):
     Date: datetime
 
 
-class DevilFruit(BaseModel):
+class DevilFruitEntry(BaseModel):
     fruitKey: str
     owner: Optional[UUID]
     status: FruitStatus
     statusMessage: str
     Date: datetime
     history: list[HistoryEntry]
+
+
+class DevilFruit(BaseModel):
+    name: str
+    format_name: str
+    qualified_name: str
+    rarity: str
+    mod_data: DevilFruitEntry
