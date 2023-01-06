@@ -46,15 +46,14 @@ class GameTasks(commands.Cog):
     async def download_data(self):
         time = datetime.utcnow()
         ftp = FTPHandler(self.bot.config.mineminenomi.ftp)
-        return
         with ftp.client as sftp:
-            with sftp.cd("World/playerdata/"):
+            with sftp.cd("World/data/"):
                 sftp.get('mineminenomi.dat', self.game_cache_folder.joinpath('mineminenomi.dat'))
                 self.bot.logger.debug("Downloaded 'mineminenomi.dat' from the server.")
-            with sftp.cd('World/data/'):
+            with sftp.cd('World/playerdata/'):
                 for file in sftp.listdir_attr():
                     filepath = Path(file.filename)
-                    if filepath.suffix in ('.dat', '.json'):
+                    if filepath.suffix not in ('.dat', '.json'):
                         continue
                     if self.player_cache_folder.joinpath(filepath.name).exists():
                         if time - timedelta(minutes=5) > datetime.utcfromtimestamp(file.st_mtime):

@@ -36,7 +36,7 @@ class ColourFormatter(logging.Formatter):
 
 
 class Logger:
-    def __init__(self, name="PyBot", level=logging.INFO):
+    def __init__(self, name="PyBot", level=logging.DEBUG):
         formatter = logging.Formatter(
             '[{asctime}] [{levelname:<8}] {name}: {message}',
             '%Y-%m-%d %H:%M:%S',
