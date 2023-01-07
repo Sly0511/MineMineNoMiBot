@@ -1,6 +1,7 @@
 [bot]
     token = "DISCORD BOT TOKEN HERE"
     prefix = "!"
+    server = 0
     owners = [ # Owners of the bot
         0,
         1
@@ -28,3 +29,23 @@
         host = "play.server.com"
         port = 30130
         password = "password"
+
+    [mineminenomi.races]
+        cyborg =         0
+        fishman =        0
+        human =          0
+        mink =           0
+
+    [mineminenomi.factions]
+        bounty_hunter =  0
+        marine =         0
+        pirate =         0
+        revolutionary =  0
+
+    [mineminenomi.fighting_styles]
+        art_of_weather = 0
+        black_leg =      0
+        brawler =        0
+        doctor =         0
+        sniper =         0
+        swordsman =      0

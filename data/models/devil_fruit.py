@@ -5,6 +5,7 @@ from datetime import datetime
 from uuid import UUID
 from utils.mineminenomi import int_array_to_uuid
 
+
 class FruitStatus(Enum):
     dropped = "DROPPED"
     inventory = "INVENTORY"
@@ -52,3 +53,6 @@ class DevilFruit(BaseModel):
     qualified_name: str
     rarity: DevilFruitRarity
     mod_data: DevilFruitEntry
+
+    def __repr__(self):
+        return f"<fruit=\"{self.format_name}\" history={len(self.mod_data.history)}>"

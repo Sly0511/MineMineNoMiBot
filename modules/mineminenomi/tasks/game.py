@@ -61,19 +61,23 @@ class GameTasks(commands.Cog):
                     filepath = Path(file.filename)
                     if filepath.suffix not in ('.dat', '.json'):
                         continue
-                    if self.player_cache_folder.joinpath(filepath.name).exists():
-                        if time - timedelta(minutes=5) > datetime.utcfromtimestamp(file.st_mtime):
+                    local_file = self.player_cache_folder.joinpath(filepath.name)
+                    if local_file.exists():
+                        if time - timedelta(minutes=5) > datetime.utcfromtimestamp(file.st_mtime) \
+                                or local_file.stat().st_size != file.st_size:
                             continue
                     sftp.get(filepath.name, self.player_cache_folder.joinpath(filepath.name))
                     self.bot.logger.debug(f"Downloaded '{filepath.name}' from the server.")
 
     @tasks.loop(seconds=1)
     async def retrieve_data(self):
-        await sleep(300)
+        await self.bot.modules_ready.wait()
+        await sleep(60)
         await self.download_data()
 
-    @tasks.loop(minutes=3)
+    @tasks.loop(minutes=1)
     async def game_data(self):
+        await self.bot.modules_ready.wait()
         game = self.game_cache_folder.joinpath("mineminenomi.dat")
         game_data_bytes = game.open("rb")
         game_data_nbt = read_from_nbt_file(game_data_bytes)
@@ -81,9 +85,29 @@ class GameTasks(commands.Cog):
         game_data = NBTParser.parse(game_data)
         self.bot.devil_fruits = []
         devil_fruits_data = load(Path('data/fruits.json').open())
+        one_fruits = {
+            oneFruit['fruit']: oneFruit
+            for oneFruit in game_data['data']['oneFruitList']
+        }
         for box_tier, fruits in devil_fruits_data.items():
             for fruit in fruits:
                 for qualified_name, fruit_metadata in fruit.items():
+                    if qualified_name not in one_fruits.keys():
+                        self.bot.devil_fruits.append(
+                            DevilFruit(
+                                name=fruit_metadata['name'],
+                                format_name=fruit_metadata['format_name'],
+                                qualified_name=qualified_name,
+                                rarity=box_tier,
+                                mod_data={
+                                    "fruit": qualified_name,
+                                    "status": "LOST",
+                                    "lastUpdate": datetime.utcnow(),
+                                    "history": []
+                                }
+                            )
+                        )
+                        continue
                     for oneFruit in game_data['data']['oneFruitList']:
                         if oneFruit['fruit'] == qualified_name:
                             self.bot.devil_fruits.append(
@@ -100,6 +124,7 @@ class GameTasks(commands.Cog):
 
     @tasks.loop(minutes=3)
     async def player_data(self):
+        await self.bot.modules_ready.wait()
         while not self.game_data_ready:
             await sleep(3)
         players = []

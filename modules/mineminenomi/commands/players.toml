@@ -1,0 +1,4 @@
+name = "Player Commands"
+description = "Commands for player based data"
+enabled = true
+priority = 8

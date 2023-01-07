@@ -6,3 +6,5 @@ beanie~=1.16.8
 Python-NBT
 pysftp~=0.2.9
 toml~=0.10.2
+mcrcon~=0.7.0
+matplotlib~=3.6.2

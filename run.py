@@ -12,10 +12,12 @@ from utils.database.models.mineminenomi import Player
 from utils.modules import Module
 from utils import Logger, Tree
 from json import dumps
+from asyncio import Event
 
 
 class PyBot(AutoShardedBot):
     def __init__(self):
+        self.modules_ready = Event()
         self.logger = Logger()
         self.config = None
         self.modules = []
@@ -66,6 +68,8 @@ class PyBot(AutoShardedBot):
                 self.logger.info(f"Loaded {module.info.name}")
             else:
                 self.logger.debug(f"Skipping '{module.info.name}' because it's disabled")
+        self.modules_ready.set()
+        self.logger.info("Finished loading modules")
 
     async def setup_hook(self):
         self.load_config()
