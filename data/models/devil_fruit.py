@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import Optional
-from uuid import UUID
 from enum import Enum
 from datetime import datetime
-
+from uuid import UUID
+from utils.mineminenomi import int_array_to_uuid
 
 class FruitStatus(Enum):
     dropped = "DROPPED"
@@ -13,24 +13,42 @@ class FruitStatus(Enum):
 
 
 class HistoryEntry(BaseModel):
-    owner: Optional[UUID]
+    uuid: Optional[list[int, int, int, int]] = None
     status: FruitStatus
     statusMessage: str
-    Date: datetime
+    date: datetime
+
+    @validator("uuid", always=True)
+    def get_uuid(cls, value, values) -> UUID:
+        if value is None:
+            return value
+        return int_array_to_uuid(value)
 
 
 class DevilFruitEntry(BaseModel):
-    fruitKey: str
-    owner: Optional[UUID]
+    fruit: str
+    owner: Optional[list[int, int, int, int]] = None
     status: FruitStatus
-    statusMessage: str
-    Date: datetime
+    statusMessage: Optional[str]
+    lastUpdate: datetime
     history: list[HistoryEntry]
+
+    @validator("owner", always=True)
+    def get_uuid(cls, value, values) -> UUID:
+        if value is None:
+            return value
+        return int_array_to_uuid(value)
+
+
+class DevilFruitRarity(Enum):
+    GOLDEN = "golden_box"
+    IRON = "iron_box"
+    WOODEN = "wooden_box"
 
 
 class DevilFruit(BaseModel):
     name: str
     format_name: str
     qualified_name: str
-    rarity: str
+    rarity: DevilFruitRarity
     mod_data: DevilFruitEntry

@@ -12,3 +12,4 @@ class SubRaces(Enum):
     Bunny = "mink_bunny"
     Dog = "mink_dog"
     Lion = "mink_lion"
+    NONE = ""

@@ -16,22 +16,19 @@ class PlayerStats(BaseModel):
     belly: int
     bounty: int
     loyalty: int
-    doriki: int
-    harderning_haki: float
-    imbuing_haki: float
-    observation_haki: float
+    doriki: float
+    busoshoku_haki: float
+    kenboshoku_haki: float
     haoshoku_haki: bool
     haki_limit: float
-    last_seen: datetime
-    inactive: bool
     devil_fruits: list[DevilFruit]
     eaten_devil_fruits: list[DevilFruit]
     inventory_devil_fruits: list[DevilFruit]
 
 
 class Player(Document):
-    uuid: Indexed(UUID)
-    user: Link[User]
+    uuid: Indexed(UUID, unique=True)
+    user: Optional[Link[User]] = None
     name: str
     last_update: datetime
     stats: PlayerStats
