@@ -29,6 +29,17 @@ class PyBot(AutoShardedBot):
         )
 
     def load_config(self):
+        config_file = Path("config.toml")
+        if not config_file.exists():
+            dist_config_file = Path("config_dist.toml")
+            if not dist_config_file.exists():
+                self.logger.error("Could not find \"config_dist.toml\". Was it deleted?")
+            else:
+                with config_file.open("w+") as f:
+                    f.write(dist_config_file.read_text())
+                    self.logger.warning("Config file was generated from \"config_dist.toml\"")
+                    self.logger.warning("Please set the required variables.")
+            quit()
         self.config = Config(**load("config.toml"))
         self.logger.debug("Successfully loaded configuration: " + dumps(self.config.json()))
 
