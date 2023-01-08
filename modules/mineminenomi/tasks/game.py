@@ -59,7 +59,7 @@ class GameTasks(commands.Cog):
             with sftp.cd('World/playerdata/'):
                 for file in sftp.listdir_attr():
                     filepath = Path(file.filename)
-                    if filepath.suffix == ".dat":
+                    if filepath.suffix != ".dat":
                         continue
                     local_file = self.player_cache_folder.joinpath(filepath.name)
                     if local_file.exists():

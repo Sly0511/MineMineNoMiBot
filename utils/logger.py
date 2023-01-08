@@ -2,6 +2,7 @@ import logging
 import logging.handlers
 from datetime import datetime
 import os
+from pathlib import Path
 
 timestamped_log = "logs/" + datetime.utcnow().strftime('%Y-%m-%d_%H-%M.log')
 
@@ -42,13 +43,12 @@ class Logger:
             '%Y-%m-%d %H:%M:%S',
             style='{'
         )
-        self.delete_log('logs/latest.log')
-        self.delete_log('logs/debug.log')
-        self.delete_log(timestamped_log)
+        self.logs_folder = Path("logs")
+        self.delete_logs()
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
         self.latest_handler = logging.handlers.RotatingFileHandler(
-            'logs/latest.log',
+            self.logs_folder.joinpath("latest.log"),
             encoding='utf-8',
             maxBytes=33554432,
             backupCount=5
@@ -57,7 +57,7 @@ class Logger:
         self.latest_handler.setLevel(logging.INFO)
         self.logger.addHandler(self.latest_handler)
         self.debug_handler = logging.handlers.RotatingFileHandler(
-            'logs/debug.log',
+            self.logs_folder.joinpath("debug.log"),
             encoding='utf-8',
             maxBytes=33554432,
             backupCount=5
@@ -79,11 +79,20 @@ class Logger:
         self.stream_handler.setFormatter(ColourFormatter())
         self.logger.addHandler(self.stream_handler)
 
-    def delete_log(self, filename):
-        try:
-            os.remove(filename)
-        except FileNotFoundError:
-            pass
+    def delete_logs(self):
+        files = [
+            'logs/latest.log',
+            'logs/debug.log',
+            timestamped_log,
+        ]
+        for file in files:
+            try:
+                os.remove(file)
+            except FileNotFoundError:
+                ...
+        for log in self.logs_folder.iterdir():
+            if log.stat().st_ctime < datetime.utcnow().timestamp() - 1800:
+                log.unlink()
 
     def debug(self, message):
         self.logger.debug(message)
