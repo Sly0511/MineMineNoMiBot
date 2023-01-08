@@ -1,14 +1,36 @@
 from discord.ext import commands
-from discord import app_commands, File
+from discord import app_commands, File, Embed
 from data.models import Races, FightingStyles, Factions
 import matplotlib.pyplot as plt
 from io import BytesIO
 from utils.database.models import Player
+from random import randint
+from mcrcon import MCRcon, MCRconException
+from utils.discord import CodeButton
 
 
 class PlayerCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @app_commands.command(name="link", description="Link a player to a discord account.")
+    async def link_player(self, interaction, *, player: str):
+        """Links a player to a discord account."""
+        await interaction.response.defer()
+        code = randint(1000, 9999)
+        rcon_config = self.bot.config.mineminenomi.rcon
+        with MCRcon(host=rcon_config.host, password=rcon_config.password, port=rcon_config.port) as rcon:
+            try:
+                result = rcon.command(f"/msg {player} Your Discord link code: {code}")
+                if "No player was found" in result:
+                    return await interaction.followup.send(f"You must be online, check also for typos.")
+            except MCRconException:
+                return await interaction.followup.send(f"The {self.bot.config.bot.server_name} server isn't responding.")
+        embed = Embed(title="Discord Account Link")
+        embed.description = (
+            'A code was sent to you via private message in minecraft. Click "Input code" and put the code in the box.'
+        )
+        await interaction.followup.send(view=CodeButton(self.bot, interaction.user, player, code), embed=embed, ephemeral=True)
 
     @app_commands.command(name="factions_population", description="Shows population distribution across factions.")
     async def get_factions_population(self, interaction):

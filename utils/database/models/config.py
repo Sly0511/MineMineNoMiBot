@@ -5,6 +5,7 @@ class BotConfig(BaseModel):
     token: str
     prefix: str
     server: int
+    server_name: str
     owners: list[int]
     admins: list[int]
     blacklist: list[int]

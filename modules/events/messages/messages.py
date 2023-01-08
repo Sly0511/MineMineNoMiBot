@@ -23,8 +23,8 @@ class MessageEvents(commands.Cog):
     async def can_run(self, ctx: commands.Context) -> bool:
         if ctx.author.bot:
             return False
-        if ctx.author.id in self.bot.config.bot.owners:
-            return False
+        # if ctx.author.id in self.bot.config.bot.owners:
+        #     return False
         if ctx.author.id in self.bot.config.bot.blacklist:
             return False
         return True

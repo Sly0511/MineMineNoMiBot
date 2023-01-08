@@ -1,4 +1,5 @@
 from discord.ext import commands
+from discord import app_commands
 
 
 def in_bot_owners():
@@ -15,3 +16,11 @@ def in_bot_admins():
             return True
         return False
     return commands.check(predicate)
+
+
+def is_bot_owners_interaction():
+    def predicate(interaction) -> bool:
+        if interaction.user.id in interaction.client.config.bot.owners:
+            return True
+        return False
+    return app_commands.check(predicate)

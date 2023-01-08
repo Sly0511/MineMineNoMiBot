@@ -2,6 +2,7 @@
     token = "DISCORD BOT TOKEN HERE"
     prefix = "!"
     server = 0
+    server_name = "My Server"
     owners = [ # Owners of the bot
         0,
         1

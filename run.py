@@ -76,6 +76,9 @@ class PyBot(AutoShardedBot):
         await self.start_database()
         await self.load_modules()
 
+    async def on_message(self, message):
+        ...
+
 
 if __name__ == "__main__":
     bot = PyBot()

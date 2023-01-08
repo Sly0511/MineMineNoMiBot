@@ -4,7 +4,6 @@ from utils.mineminenomi import int_array_to_uuid
 from json import load
 from pathlib import Path
 from datetime import datetime
-from data.models.devil_fruit import FruitStatus
 
 
 class PlayerEvents(commands.Cog):
@@ -63,32 +62,67 @@ class PlayerEvents(commands.Cog):
                     "inventory_devil_fruits": inventory_devil_fruits
                 }
             )
-            if player_entry.stats.haoshoku_haki:
-                print(player_entry.name)
             #print([df.mod_data.status for df in self.bot.devil_fruits if df.mod_data.status != FruitStatus.lost])
             if player_db := await Player.find_one(Player.uuid == uuid):
                 player_entry.id = player_db.id
+                player_entry.user = player_db.user
                 await player_entry.replace()
             else:
                 await player_entry.insert()
 
     @tasks.loop(minutes=1)
     async def manage_roles(self):
-        await self.bot.modules_ready()
+        await self.bot.wait_until_ready()
         guild = self.bot.get_guild(self.bot.config.bot.server)
-        await self.manage_races(guild)
+        async for player in Player.find_many(Player.user != None):
+            roles = {
+                key: guild.get_role(value)
+                for key, value in self.bot.config.mineminenomi.races.dict().items()
+            }
+            await self.manage_races(guild, roles, player)
+            roles = {
+                key: guild.get_role(value)
+                for key, value in self.bot.config.mineminenomi.factions.dict().items()
+            }
+            await self.manage_factions(guild, roles, player)
+            roles = {
+                key: guild.get_role(value)
+                for key, value in self.bot.config.mineminenomi.fighting_styles.dict().items()
+            }
+            await self.manage_fighting_styles(guild, roles, player)
 
-    async def manage_races(self, guild):
-        roles = {
-            key: guild.get_role(value)
-            for key, value in self.bot.config.mineminenomi.races.json().items()
-        }
-        async for player in Player.find_many():
-            for race, role in roles.items():
-                if Player.stats.race.name == race:
-                    ... # Missing logic
-                else:
-                    ... # Missing logic
+    async def manage_races(self, guild, roles, player):
+        user_data = await player.user.fetch()
+        user = guild.get_member(user_data.user_id)
+        for race, role in roles.items():
+            if player.stats.race.value == race:
+                if role not in user.roles:
+                    await user.add_roles(role)
+            else:
+                if role in user.roles:
+                    await user.remove_roles(role)
+
+    async def manage_factions(self, guild, roles, player):
+        user_data = await player.user.fetch()
+        user = guild.get_member(user_data.user_id)
+        for faction, role in roles.items():
+            if player.stats.faction.value == faction:
+                if role not in user.roles:
+                    await user.add_roles(role)
+            else:
+                if role in user.roles:
+                    await user.remove_roles(role)
+
+    async def manage_fighting_styles(self, guild, roles, player):
+        user_data = await player.user.fetch()
+        user = guild.get_member(user_data.user_id)
+        for fighting_style, role in roles.items():
+            if player.stats.fighting_style.value == fighting_style:
+                if role not in user.roles:
+                    await user.add_roles(role)
+            else:
+                if role in user.roles:
+                    await user.remove_roles(role)
 
 
 async def setup(bot):
