@@ -4,7 +4,7 @@ from ..user import User
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
-from data.models import Races, SubRaces, Factions, FightingStyles, DevilFruit
+from data.models import Ability, Races, SubRaces, Factions, FightingStyles, DevilFruit
 
 
 class PlayerStats(BaseModel):
@@ -24,6 +24,7 @@ class PlayerStats(BaseModel):
     devil_fruits: list[DevilFruit]
     eaten_devil_fruits: list[DevilFruit]
     inventory_devil_fruits: list[DevilFruit]
+    abilities: list[Ability]
 
 
 class Player(Document):

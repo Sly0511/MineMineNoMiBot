@@ -4,6 +4,8 @@ from utils.mineminenomi import int_array_to_uuid
 from json import load
 from pathlib import Path
 from datetime import datetime
+from mcrcon import MCRcon, MCRconException
+import re
 
 
 class PlayerEvents(commands.Cog):
@@ -12,6 +14,15 @@ class PlayerEvents(commands.Cog):
 
     async def cog_load(self):
         self.manage_roles.start()
+
+    def get_online_players(self):
+        rcon_config = self.bot.config.mineminenomi.rcon
+        with MCRcon(host=rcon_config.host, password=rcon_config.password, port=rcon_config.port) as rcon:
+            try:
+                result = rcon.command("/list")
+                return re.findall("(\w{2,16})(?:,|$)", result)
+            except MCRconException:
+                self.bot.logger.error(f"Failed to list players")
 
     @commands.Cog.listener("on_player_data_read")
     async def on_player_data_read(self, data):
@@ -59,7 +70,8 @@ class PlayerEvents(commands.Cog):
                     "haki_limit": round(2200 + (total_haki * 32), 1),
                     "devil_fruits": devil_fruits,
                     "eaten_devil_fruits": eaten_devil_fruits,
-                    "inventory_devil_fruits": inventory_devil_fruits
+                    "inventory_devil_fruits": inventory_devil_fruits,
+                    "abilities": ability_data['unlocked_abilities'],
                 }
             )
             #print([df.mod_data.status for df in self.bot.devil_fruits if df.mod_data.status != FruitStatus.lost])
@@ -69,60 +81,99 @@ class PlayerEvents(commands.Cog):
                 await player_entry.replace()
             else:
                 await player_entry.insert()
+            self.bot.dispatch("player_data_inserted", player_entry)
+
+    @commands.Cog.listener("on_player_data_inserted")
+    async def awakened_fruits(self, player):
+        online_players = self.get_online_players()
+        if player.name not in online_players:
+            return
+        awakened_abilities = load(Path("data/awakenings.json").open())
+        rcon_config = self.bot.config.mineminenomi.rcon
+        player_abilities = [a.id for a in player.stats.abilities]
+        with MCRcon(host=rcon_config.host, password=rcon_config.password, port=rcon_config.port) as rcon:
+            for fruit, abilities in awakened_abilities.items():
+                if fruit in [df.qualified_name for df in player.stats.eaten_devil_fruits]:
+                    for ability in abilities:
+                        if set(ability['required']).issubset(set(player_abilities)):
+                            for awarded_ability in ability['awarded']:
+                                if awarded_ability["name"] not in player_abilities:
+                                    try:
+                                        rcon.command(f"/ability give mineminenomi:{awarded_ability['name']} {player.name}")
+                                        rcon.command(f"/msg {player.name} §2you've unlocked §4{ability['name']}§2 ability§r")
+                                        rcon.command(f"/save-all")
+                                        self.bot.logger.info(f"Gave {awarded_ability['name']} to {player.name}")
+                                    except MCRconException:
+                                        return self.bot.logger.error("Failed to give ability.")
+                        else:
+                            for awarded_ability in ability['awarded']:
+                                if awarded_ability['name'] in player_abilities:
+                                    try:
+                                        rcon.command(f"/ability remove mineminenomi:{awarded_ability['name']} {player.name}")
+                                        rcon.command(f"/save-all")
+                                        self.bot.logger.info(f"Removed {awarded_ability['name']} from {player.name}")
+                                    except MCRconException:
+                                        return self.bot.logger.error("Failed to give ability.")
+                else:
+                    for ability in abilities:
+                        for awarded_ability in ability['awarded']:
+                            if awarded_ability['name'] in player_abilities:
+                                if awarded_ability['fruit'] not in [df.qualified_name for df in player.stats.eaten_devil_fruits]:
+                                    try:
+                                        rcon.command(f"/ability remove mineminenomi:{awarded_ability['name']} {player.name}")
+                                        rcon.command(f"/save-all")
+                                        self.bot.logger.info(f"Removed {awarded_ability['name']} from {player.name} | No Fruit")
+                                    except MCRconException:
+                                        return self.bot.logger.error("Failed to give ability.")
 
     @tasks.loop(minutes=1)
     async def manage_roles(self):
         await self.bot.wait_until_ready()
         guild = self.bot.get_guild(self.bot.config.bot.server)
-        async for player in Player.find_many(Player.user != None):
+        for member in guild.members:
+            player = await Player.find_one(Player.user.user_id == member.id, fetch_links=True)
             roles = {
                 key: guild.get_role(value)
                 for key, value in self.bot.config.mineminenomi.races.dict().items()
             }
-            await self.manage_races(guild, roles, player)
+            await self.manage_races(roles, member, player)
             roles = {
                 key: guild.get_role(value)
                 for key, value in self.bot.config.mineminenomi.factions.dict().items()
             }
-            await self.manage_factions(guild, roles, player)
+            await self.manage_factions(roles, member, player)
             roles = {
                 key: guild.get_role(value)
                 for key, value in self.bot.config.mineminenomi.fighting_styles.dict().items()
             }
-            await self.manage_fighting_styles(guild, roles, player)
+            await self.manage_fighting_styles(roles, member, player)
 
-    async def manage_races(self, guild, roles, player):
-        user_data = await player.user.fetch()
-        user = guild.get_member(user_data.user_id)
+    async def manage_races(self, roles, member, player):
         for race, role in roles.items():
-            if player.stats.race.value == race:
-                if role not in user.roles:
-                    await user.add_roles(role)
+            if player and player.stats.race.value == race:
+                if role not in member.roles:
+                    await member.add_roles(role)
             else:
-                if role in user.roles:
-                    await user.remove_roles(role)
+                if role in member.roles:
+                    await member.remove_roles(role)
 
-    async def manage_factions(self, guild, roles, player):
-        user_data = await player.user.fetch()
-        user = guild.get_member(user_data.user_id)
+    async def manage_factions(self, roles, member, player):
         for faction, role in roles.items():
-            if player.stats.faction.value == faction:
-                if role not in user.roles:
-                    await user.add_roles(role)
+            if player and player.stats.faction.value == faction:
+                if role not in member.roles:
+                    await member.add_roles(role)
             else:
-                if role in user.roles:
-                    await user.remove_roles(role)
+                if role in member.roles:
+                    await member.remove_roles(role)
 
-    async def manage_fighting_styles(self, guild, roles, player):
-        user_data = await player.user.fetch()
-        user = guild.get_member(user_data.user_id)
+    async def manage_fighting_styles(self, roles, member, player):
         for fighting_style, role in roles.items():
-            if player.stats.fighting_style.value == fighting_style:
-                if role not in user.roles:
-                    await user.add_roles(role)
+            if player and player.stats.fighting_style.value == fighting_style:
+                if role not in member.roles:
+                    await member.add_roles(role)
             else:
-                if role in user.roles:
-                    await user.remove_roles(role)
+                if role in member.roles:
+                    await member.remove_roles(role)
 
 
 async def setup(bot):

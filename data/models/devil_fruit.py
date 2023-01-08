@@ -1,5 +1,5 @@
-from pydantic import BaseModel, validator
-from typing import Optional
+from pydantic import BaseModel, validator, validate_arguments
+from typing import Optional, Union
 from enum import Enum
 from datetime import datetime
 from uuid import UUID
@@ -14,21 +14,21 @@ class FruitStatus(Enum):
 
 
 class HistoryEntry(BaseModel):
-    uuid: Optional[list[int, int, int, int]] = None
+    uuid: Optional[Union[UUID, list[int, int, int, int]]] = None
     status: FruitStatus
     statusMessage: str
     date: datetime
 
     @validator("uuid", always=True)
     def get_uuid(cls, value, values) -> UUID:
-        if value is None:
-            return value
-        return int_array_to_uuid(value)
+        if isinstance(value, list):
+            return int_array_to_uuid(value)
+        return value
 
 
 class DevilFruitEntry(BaseModel):
     fruit: str
-    owner: Optional[list[int, int, int, int]] = None
+    owner: Optional[Union[UUID, list[int, int, int, int]]] = None
     status: FruitStatus
     statusMessage: Optional[str]
     lastUpdate: datetime
@@ -36,9 +36,9 @@ class DevilFruitEntry(BaseModel):
 
     @validator("owner", always=True)
     def get_uuid(cls, value, values) -> UUID:
-        if value is None:
-            return value
-        return int_array_to_uuid(value)
+        if isinstance(value, list):
+            return int_array_to_uuid(value)
+        return value
 
 
 class DevilFruitRarity(Enum):

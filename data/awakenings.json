@@ -1,0 +1,32 @@
+{
+    "gomu_gomu": [
+        {
+            "name": "Red Hawk",
+            "required": [
+                "gear_second",
+                "gomu_gomu_no_pistol",
+                "busoshoku_haki_hardening"
+            ],
+            "awarded": [
+                {
+                    "name": "heat_denasshi",
+                    "fruit": "netsu_netsu"
+                }
+            ]
+        },
+        {
+            "name": "Red Roc",
+            "required": [
+                "gear_third",
+                "gomu_gomu_no_pistol",
+                "busoshoku_haki_emission"
+            ],
+            "awarded": [
+                {
+                    "name": "hiken",
+                    "fruit": "mera_mera"
+                }
+            ]
+        }
+    ]
+}
