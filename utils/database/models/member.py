@@ -1,6 +1,7 @@
-from beanie import Document, Link, Indexed
-from .user import User
+from beanie import Document, Indexed, Link
+
 from .guild import Guild
+from .user import User
 
 
 class Member(Document):

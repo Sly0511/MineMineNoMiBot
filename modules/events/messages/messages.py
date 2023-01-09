@@ -1,5 +1,6 @@
 from discord.ext import commands
-from utils.database.models import Guild, User, Member
+
+from utils.database.models import Guild, Member, User
 
 
 class MessageEvents(commands.Cog):

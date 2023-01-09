@@ -1,13 +1,7 @@
 from datetime import timedelta
 
 from discord import app_commands
-from discord.app_commands.errors import (
-    CheckFailure,
-    CommandNotFound,
-    CommandOnCooldown,
-    MissingRole,
-)
-from discord.errors import NotFound
+from discord.app_commands.errors import CheckFailure, CommandOnCooldown, MissingRole
 
 
 class Tree(app_commands.CommandTree):

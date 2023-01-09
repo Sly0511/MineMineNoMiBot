@@ -1,12 +1,14 @@
-from discord.ext import commands
-from discord import app_commands, File, Embed
-from data.models import Races, FightingStyles, Factions
-import matplotlib.pyplot as plt
 from io import BytesIO
-from utils.database.models import Player
 from random import randint
-from mcrcon import MCRcon, MCRconException
+
+import matplotlib.pyplot as plt
+from discord import Embed, File, app_commands
+from discord.ext import commands
+
+from data.models import Factions, FightingStyles, Races
+from utils.database.models import Player
 from utils.discord import CodeButton
+from utils.mineminenomi import run_rcon_command
 
 
 class PlayerCommands(commands.Cog):
@@ -20,20 +22,17 @@ class PlayerCommands(commands.Cog):
         """Links a player to a discord account."""
         await interaction.response.defer()
         code = randint(1000, 9999)
-        rcon_config = self.bot.config.mineminenomi.rcon
-        with MCRcon(
-            host=rcon_config.host, password=rcon_config.password, port=rcon_config.port
-        ) as rcon:
-            try:
-                result = rcon.command(f"/msg {player} Your Discord link code: {code}")
-                if "No player was found" in result:
-                    return await interaction.followup.send(
-                        f"You must be online, check also for typos."
-                    )
-            except MCRconException:
-                return await interaction.followup.send(
-                    f"The {self.bot.config.bot.server_name} server isn't responding."
-                )
+        command = run_rcon_command(
+            self.bot, f"msg {player} Your Discord link code: {code}"
+        )
+        if not command:
+            return await interaction.followup.send(
+                f"Couldn't connect to the server, it may be offline."
+            )
+        if "No player was found" in command:
+            return await interaction.followup.send(
+                f"You must be online, check also for typos."
+            )
         embed = Embed(title="Discord Account Link")
         embed.description = 'A code was sent to you via private message in minecraft. Click "Input code" and put the code in the box.'
         await interaction.followup.send(

@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from pathlib import Path
+
+from pydantic import BaseModel
 from toml import load
 
 

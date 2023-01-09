@@ -1,1 +1,1 @@
-from .data import Player, DevilFruit
+from .data import DevilFruit, Player

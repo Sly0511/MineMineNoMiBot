@@ -1,3 +1,4 @@
+from json import dumps
 from pathlib import Path
 
 from beanie import init_beanie
@@ -7,20 +8,16 @@ from discord.ext.commands import AutoShardedBot
 from motor.motor_asyncio import AsyncIOMotorClient
 from toml import load
 
-from utils.database.models import Config, Guild, User, Member
+from utils import Logger, Tree
+from utils.database.models import Config, Guild, Member, User
 from utils.database.models.mineminenomi import Player
 from utils.modules import Module
-from utils import Logger, Tree
-from json import dumps
-from asyncio import Event
 
 
 class PyBot(AutoShardedBot):
     def __init__(self):
-        self.modules_ready = Event()
         self.logger = Logger()
         self.config = None
-        self.modules = []
         self.load_config()
         super(PyBot, self).__init__(
             command_prefix=self.handle_prefix,
@@ -61,20 +58,27 @@ class PyBot(AutoShardedBot):
         )
         self.logger.info("Database initialized")
 
-    async def load_modules(self):
+    def get_modules(self):
         modules_path = Path("modules")
+        modules = []
         for module in modules_path.rglob("*.py"):
             try:
-                module = Module.create(module)
+                modules.append(Module.create(module))
             except FileNotFoundError as err:
                 self.logger.warning(f'Skipped loading module in "{module}": {err}')
                 continue
-            self.modules.append(module)
-        self.modules.sort(key=lambda x: x.info.priority)
+        modules.sort(key=lambda x: x.info.priority)
+        loaded_modules_specs = [v.__module__ for c, v in self.cogs.items()]
+        loaded_modules = [m for m in modules if m.spec in loaded_modules_specs]
+        unloaded_modules = [m for m in modules if m not in loaded_modules]
+        return modules, loaded_modules, unloaded_modules
+
+    async def load_modules(self):
+        _, _, modules = self.get_modules()
         self.logger.info(
-            f"Found {len(self.modules)} modules. {', '.join([m.info.name for m in self.modules])}"
+            f"Found {len(modules)} modules. {', '.join([m.info.name for m in modules])}"
         )
-        for module in self.modules:
+        for module in modules:
             if module.info.enabled:
                 await self.load_extension(module.spec)
                 self.logger.info(f"Loaded {module.info.name}")
@@ -82,7 +86,6 @@ class PyBot(AutoShardedBot):
                 self.logger.debug(
                     f"Skipping '{module.info.name}' because it's disabled"
                 )
-        self.modules_ready.set()
         self.logger.info("Finished loading modules")
 
     async def setup_hook(self):

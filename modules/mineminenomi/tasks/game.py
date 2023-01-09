@@ -1,12 +1,13 @@
-from discord.ext import commands, tasks
-from pathlib import Path
-from asyncio import sleep
-from python_nbt.nbt import read_from_nbt_file
-from utils.mineminenomi import NBTParser
-from pysftp import Connection, CnOpts
 from datetime import datetime, timedelta
 from json import load
+from pathlib import Path
+
+from discord.ext import commands, tasks
+from pysftp import CnOpts, Connection
+from python_nbt.nbt import read_from_nbt_file
+
 from data.models import DevilFruit
+from utils.mineminenomi import NBTParser
 
 
 class FTPHandler:
@@ -30,24 +31,16 @@ class GameTasks(commands.Cog):
         self.player_cache_folder = self.cache_folder.joinpath("player")
         self.stats_cache_folder = self.cache_folder.joinpath("stats")
         self.logs_cache_folder = self.cache_folder.joinpath("logs")
-        self.game_data_ready = False
 
     async def cog_load(self):
         self.game_cache_folder.mkdir(parents=True, exist_ok=True)
         self.player_cache_folder.mkdir(parents=True, exist_ok=True)
         self.stats_cache_folder.mkdir(parents=True, exist_ok=True)
         self.logs_cache_folder.mkdir(parents=True, exist_ok=True)
-        await self.download_data()
-        self.start_tasks()
+        self.retrieve_data.start()
 
     async def cog_unload(self):
-        self.player_data.cancel()
-        self.game_data.cancel()
-
-    def start_tasks(self):
-        self.retrieve_data.start()
-        self.game_data.start()
-        self.player_data.start()
+        self.retrieve_data.cancel()
 
     async def download_data(self):
         time = datetime.utcnow()
@@ -130,15 +123,14 @@ class GameTasks(commands.Cog):
                         f"Downloaded '{filepath.name}' from the server."
                     )
 
-    @tasks.loop(seconds=1)
+    @tasks.loop(seconds=60)
     async def retrieve_data(self):
-        await self.bot.modules_ready.wait()
-        await sleep(60)
+        await self.bot.wait_until_ready()
         await self.download_data()
+        await self.game_data()
+        await self.player_data()
 
-    @tasks.loop(minutes=1)
     async def game_data(self):
-        await self.bot.modules_ready.wait()
         game = self.game_cache_folder.joinpath("mineminenomi.dat")
         game_data_bytes = game.open("rb")
         game_data_nbt = read_from_nbt_file(game_data_bytes)
@@ -181,13 +173,8 @@ class GameTasks(commands.Cog):
                                 )
                             )
         self.bot.dispatch("game_data_read", game_data)
-        self.game_data_ready = True
 
-    @tasks.loop(minutes=3)
     async def player_data(self):
-        await self.bot.modules_ready.wait()
-        while not self.game_data_ready:
-            await sleep(3)
         players = []
         for player in self.player_cache_folder.glob("*.dat"):
             player_data_bytes = player.open("rb")

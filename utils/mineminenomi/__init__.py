@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from mcrcon import MCRcon, MCRconException
+
 
 class NBTParser:
     @classmethod
@@ -38,9 +40,42 @@ class NBTParser:
         return cls.datatypes(data.get("type_id"))(data["value"])
 
 
-def int_array_to_uuid(int_array: list) -> str:
+def int_array_to_uuid(int_array: list) -> UUID:
     return UUID(
         "".join(
             [str(hex(i + (2**32 if i < 0 else 0)))[2:].zfill(8) for i in int_array]
         )
     )
+
+
+def run_rcon_command(bot, command):
+    config = bot.config.mineminenomi.rcon
+    try:
+        with MCRcon(
+            host=config.host, port=config.port, password=config.password, timeout=2
+        ) as rcon:
+            if isinstance(command, str):
+                if not command.startswith("/"):
+                    command = f"/{command}"
+                result = rcon.command(command) or "Command successfully executed."
+                bot.logger.debug(f"Executed command on server: {command}")
+                return result
+            if isinstance(command, list):
+                command = [
+                    cmd if cmd.startswith("/") else f"/{command}" for cmd in command
+                ]
+                results = [
+                    rcon.command(cmd) or "Command successfully executed"
+                    for cmd in command
+                ]
+                return results
+    except (TimeoutError, ConnectionRefusedError) as err:
+        bot.logger.error(
+            f"Network: Failed executing command on server | {err}: {command}"
+        )
+        return
+    except MCRconException as err:
+        bot.logger.error(
+            f"Exception: Failed executing command on server | {err}: {command}"
+        )
+        return

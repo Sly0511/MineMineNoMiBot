@@ -1,11 +1,12 @@
-from discord.ext import commands, tasks
-from utils.database.models.mineminenomi import Player
-from utils.mineminenomi import int_array_to_uuid
+import re
+from datetime import datetime, timedelta
 from json import load
 from pathlib import Path
-from datetime import datetime, timedelta
-from mcrcon import MCRcon, MCRconException
-import re
+
+from discord.ext import commands, tasks
+
+from utils.database.models.mineminenomi import Player
+from utils.mineminenomi import int_array_to_uuid, run_rcon_command
 
 
 class PlayerEvents(commands.Cog):
@@ -20,22 +21,15 @@ class PlayerEvents(commands.Cog):
         self.manage_roles.start()
 
     def get_online_players(self):
-        rcon_config = self.bot.config.mineminenomi.rcon
-        with MCRcon(
-            host=rcon_config.host, password=rcon_config.password, port=rcon_config.port
-        ) as rcon:
-            try:
-                if self.online_players["last_update"] < datetime.utcnow() - timedelta(
-                    seconds=30
-                ):
-                    result = rcon.command("/list")
-                    self.online_players["last_update"] = datetime.utcnow()
-                    self.online_players["players"] = re.findall(
-                        "(\w{2,16})(?:,|$)", result
-                    )
-                return self.online_players["players"]
-            except MCRconException:
-                self.bot.logger.error(f"Failed to list players")
+        if self.online_players["last_update"] < datetime.utcnow() - timedelta(
+            seconds=30
+        ):
+            result = run_rcon_command(self.bot, "list")
+            if not result:
+                return
+            self.online_players["last_update"] = datetime.utcnow()
+            self.online_players["players"] = re.findall("(\w{2,16})(?:,|$)", result)
+        return self.online_players["players"]
 
     @commands.Cog.listener("on_player_data_read")
     async def on_player_data_read(self, data):
@@ -100,78 +94,64 @@ class PlayerEvents(commands.Cog):
 
     @commands.Cog.listener("on_player_data_inserted")
     async def awakened_fruits(self, player):
-        try:
-            online_players = self.get_online_players()
-        except ConnectionRefusedError:
-            return self.bot.logger.error(
-                "Unable to list online players - Server is most likely offline."
-            )
+        online_players = self.get_online_players()
+        if online_players is None:
+            return
         if player.name not in online_players:
             return
         awakened_abilities = load(Path("data/awakenings.json").open())
-        rcon_config = self.bot.config.mineminenomi.rcon
         player_abilities = [a.id for a in player.stats.abilities]
-        with MCRcon(
-            host=rcon_config.host, password=rcon_config.password, port=rcon_config.port
-        ) as rcon:
-            for fruit, abilities in awakened_abilities.items():
-                if fruit in [
-                    df.qualified_name for df in player.stats.eaten_devil_fruits
-                ]:
-                    for ability in abilities:
-                        if set(ability["required"]).issubset(set(player_abilities)):
-                            for awarded_ability in ability["awarded"]:
-                                if awarded_ability["name"] not in player_abilities:
-                                    try:
-                                        rcon.command(
-                                            f"/ability give mineminenomi:{awarded_ability['name']} {player.name}"
-                                        )
-                                        rcon.command(
-                                            f"/msg {player.name} §2you've unlocked §4{ability['name']}§2 ability§r"
-                                        )
-                                        rcon.command(f"/save-all")
-                                        self.bot.logger.info(
-                                            f"Gave {awarded_ability['name']} to {player.name}"
-                                        )
-                                    except MCRconException:
-                                        return self.bot.logger.error(
-                                            "Failed to give ability."
-                                        )
-                        else:
-                            for awarded_ability in ability["awarded"]:
-                                if awarded_ability["name"] in player_abilities:
-                                    try:
-                                        rcon.command(
-                                            f"/ability remove mineminenomi:{awarded_ability['name']} {player.name}"
-                                        )
-                                        rcon.command(f"/save-all")
-                                        self.bot.logger.info(
-                                            f"Removed {awarded_ability['name']} from {player.name}"
-                                        )
-                                    except MCRconException:
-                                        return self.bot.logger.error(
-                                            "Failed to give ability."
-                                        )
-                else:
-                    for ability in abilities:
+        for fruit, abilities in awakened_abilities.items():
+            if fruit in [df.qualified_name for df in player.stats.eaten_devil_fruits]:
+                for ability in abilities:
+                    if set(ability["required"]).issubset(set(player_abilities)):
+                        for awarded_ability in ability["awarded"]:
+                            if awarded_ability["name"] not in player_abilities:
+                                cmds = [
+                                    f"ability give mineminenomi:{awarded_ability['name']} {player.name}",
+                                    f"msg {player.name} §2you've unlocked §4{ability['name']}§2 ability§r",
+                                    "save-all",
+                                ]
+                                if not run_rcon_command(cmds):
+                                    return self.bot.logger.error(
+                                        "Failed to give ability."
+                                    )
+                                self.bot.logger.info(
+                                    f"Gave {awarded_ability['name']} to {player.name}"
+                                )
+                    else:
                         for awarded_ability in ability["awarded"]:
                             if awarded_ability["name"] in player_abilities:
-                                if awarded_ability["fruit"] not in [
-                                    df.qualified_name
-                                    for df in player.stats.eaten_devil_fruits
-                                ]:
-                                    try:
-                                        rcon.command(
-                                            f"/ability remove mineminenomi:{awarded_ability['name']} {player.name}"
-                                        )
-                                        rcon.command(f"/save-all")
-                                        self.bot.logger.info(
-                                            f"Removed {awarded_ability['name']} from {player.name} | No Fruit"
-                                        )
-                                    except MCRconException:
-                                        return self.bot.logger.error(
-                                            "Failed to give ability."
-                                        )
+                                cmds = [
+                                    f"ability remove mineminenomi:{awarded_ability['name']} {player.name}",
+                                    "save-all",
+                                ]
+                                if not run_rcon_command(cmds):
+                                    return self.bot.logger.error(
+                                        "Failed to give ability."
+                                    )
+                                self.bot.logger.info(
+                                    f"Removed {awarded_ability['name']} from {player.name}"
+                                )
+            else:
+                for ability in abilities:
+                    for awarded_ability in ability["awarded"]:
+                        if awarded_ability["name"] in player_abilities:
+                            if awarded_ability["fruit"] not in [
+                                df.qualified_name
+                                for df in player.stats.eaten_devil_fruits
+                            ]:
+                                cmds = [
+                                    f"ability remove mineminenomi:{awarded_ability['name']} {player.name}",
+                                    "save-all",
+                                ]
+                                if not run_rcon_command(cmds):
+                                    return self.bot.logger.error(
+                                        "Failed to remove ability - No Fruit"
+                                    )
+                                self.bot.logger.info(
+                                    f"Removed {awarded_ability['name']} from {player.name} | No Fruit"
+                                )
 
     @tasks.loop(minutes=1)
     async def manage_roles(self):

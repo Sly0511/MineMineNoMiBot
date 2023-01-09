@@ -1,5 +1,6 @@
-from discord import ui, Interaction, ButtonStyle
-from utils.database.models import User, Player
+from discord import ButtonStyle, Interaction, ui
+
+from utils.database.models import Player, User
 
 
 class Traceback(ui.View):

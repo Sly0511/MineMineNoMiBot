@@ -1,10 +1,13 @@
-from pydantic import BaseModel
-from beanie import Document, Link, Indexed
-from ..user import User
-from uuid import UUID
 from datetime import datetime
 from typing import Optional
-from data.models import Ability, Races, SubRaces, Factions, FightingStyles, DevilFruit
+from uuid import UUID
+
+from beanie import Document, Indexed, Link
+from pydantic import BaseModel
+
+from data.models import Ability, DevilFruit, Factions, FightingStyles, Races, SubRaces
+
+from ..user import User
 
 
 class PlayerStats(BaseModel):

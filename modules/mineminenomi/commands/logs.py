@@ -1,6 +1,7 @@
-from discord.ext import commands, tasks
-from pathlib import Path
 import gzip
+from pathlib import Path
+
+from discord.ext import commands, tasks
 
 
 class LogCommands(commands.Cog):
