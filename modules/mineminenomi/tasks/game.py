@@ -18,7 +18,7 @@ class FTPHandler:
             port=ftp_config.port,
             username=ftp_config.user,
             password=ftp_config.password,
-            cnopts=cnopts
+            cnopts=cnopts,
         )
 
 
@@ -26,14 +26,17 @@ class GameTasks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.cache_folder = Path("cache")
-        self.player_cache_folder = self.cache_folder.joinpath("player")
         self.game_cache_folder = self.cache_folder.joinpath("game")
+        self.player_cache_folder = self.cache_folder.joinpath("player")
+        self.stats_cache_folder = self.cache_folder.joinpath("stats")
+        self.logs_cache_folder = self.cache_folder.joinpath("logs")
         self.game_data_ready = False
 
     async def cog_load(self):
-        self.cache_folder.mkdir(parents=True, exist_ok=True)
-        self.player_cache_folder.mkdir(parents=True, exist_ok=True)
         self.game_cache_folder.mkdir(parents=True, exist_ok=True)
+        self.player_cache_folder.mkdir(parents=True, exist_ok=True)
+        self.stats_cache_folder.mkdir(parents=True, exist_ok=True)
+        self.logs_cache_folder.mkdir(parents=True, exist_ok=True)
         await self.download_data()
         self.start_tasks()
 
@@ -51,23 +54,81 @@ class GameTasks(commands.Cog):
         ftp = FTPHandler(self.bot.config.mineminenomi.ftp)
         with ftp.client as sftp:
             with sftp.cd():
-                sftp.get('usernamecache.json', self.game_cache_folder.joinpath('usernamecache.json'))
-                self.bot.logger.debug("Downloaded 'usernamecache.json' from the server.")
+                sftp.get(
+                    "usernamecache.json",
+                    self.game_cache_folder.joinpath("usernamecache.json"),
+                )
+                self.bot.logger.debug(
+                    "Downloaded 'usernamecache.json' from the server."
+                )
             with sftp.cd("World/data/"):
-                sftp.get('mineminenomi.dat', self.game_cache_folder.joinpath('mineminenomi.dat'))
+                sftp.get(
+                    "mineminenomi.dat",
+                    self.game_cache_folder.joinpath("mineminenomi.dat"),
+                )
                 self.bot.logger.debug("Downloaded 'mineminenomi.dat' from the server.")
-            with sftp.cd('World/playerdata/'):
+            with sftp.cd("World/playerdata/"):
                 for file in sftp.listdir_attr():
                     filepath = Path(file.filename)
                     if filepath.suffix != ".dat":
                         continue
                     local_file = self.player_cache_folder.joinpath(filepath.name)
                     if local_file.exists():
-                        if time - timedelta(minutes=5) > datetime.utcfromtimestamp(file.st_mtime) \
-                                and local_file.stat().st_size == file.st_size:
+                        if (
+                            time - timedelta(minutes=5)
+                            > datetime.utcfromtimestamp(file.st_mtime)
+                            and local_file.stat().st_size == file.st_size
+                        ):
                             continue
-                    sftp.get(filepath.name, self.player_cache_folder.joinpath(filepath.name))
-                    self.bot.logger.debug(f"Downloaded '{filepath.name}' from the server.")
+                    sftp.get(
+                        filepath.name, self.player_cache_folder.joinpath(filepath.name)
+                    )
+                    self.bot.logger.debug(
+                        f"Downloaded '{filepath.name}' from the server."
+                    )
+            with sftp.cd("World/stats/"):
+                for file in sftp.listdir_attr():
+                    filepath = Path(file.filename)
+                    if filepath.suffix != ".json":
+                        continue
+                    local_file = self.stats_cache_folder.joinpath(filepath.name)
+                    if local_file.exists():
+                        if (
+                            time - timedelta(minutes=5)
+                            > datetime.utcfromtimestamp(file.st_mtime)
+                            and local_file.stat().st_size == file.st_size
+                        ):
+                            continue
+                    sftp.get(
+                        filepath.name, self.stats_cache_folder.joinpath(filepath.name)
+                    )
+                    self.bot.logger.debug(
+                        f"Downloaded '{filepath.name}' from the server."
+                    )
+            with sftp.cd("logs/"):
+                for file in sftp.listdir_attr():
+                    filepath = Path(file.filename)
+                    local_file = self.logs_cache_folder.joinpath(filepath.name)
+                    local_log_file = self.logs_cache_folder.joinpath(
+                        filepath.name
+                    ).with_suffix("")
+                    if local_log_file.exists() or (
+                        filepath.suffix == ".gz" and filepath.stem.startswith("debug")
+                    ):
+                        continue
+                    if local_file.exists():
+                        if (
+                            time - timedelta(minutes=5)
+                            > datetime.utcfromtimestamp(file.st_mtime)
+                            and local_file.stat().st_size == file.st_size
+                        ):
+                            continue
+                    sftp.get(
+                        filepath.name, self.logs_cache_folder.joinpath(filepath.name)
+                    )
+                    self.bot.logger.debug(
+                        f"Downloaded '{filepath.name}' from the server."
+                    )
 
     @tasks.loop(seconds=1)
     async def retrieve_data(self):
@@ -84,10 +145,10 @@ class GameTasks(commands.Cog):
         game_data = game_data_nbt.json_obj(full_json=True)
         game_data = NBTParser.parse(game_data)
         self.bot.devil_fruits = []
-        devil_fruits_data = load(Path('data/fruits.json').open())
+        devil_fruits_data = load(Path("data/fruits.json").open())
         one_fruits = {
-            oneFruit['fruit']: oneFruit
-            for oneFruit in game_data['data']['oneFruitList']
+            oneFruit["fruit"]: oneFruit
+            for oneFruit in game_data["data"]["oneFruitList"]
         }
         for box_tier, fruits in devil_fruits_data.items():
             for fruit in fruits:
@@ -95,28 +156,28 @@ class GameTasks(commands.Cog):
                     if qualified_name not in one_fruits.keys():
                         self.bot.devil_fruits.append(
                             DevilFruit(
-                                name=fruit_metadata['name'],
-                                format_name=fruit_metadata['format_name'],
+                                name=fruit_metadata["name"],
+                                format_name=fruit_metadata["format_name"],
                                 qualified_name=qualified_name,
                                 rarity=box_tier,
                                 mod_data={
                                     "fruit": qualified_name,
-                                    "status": "LOST",
+                                    "status": "NEVER_FOUND",
                                     "lastUpdate": datetime.utcnow(),
-                                    "history": []
-                                }
+                                    "history": [],
+                                },
                             )
                         )
                         continue
-                    for oneFruit in game_data['data']['oneFruitList']:
-                        if oneFruit['fruit'] == qualified_name:
+                    for oneFruit in game_data["data"]["oneFruitList"]:
+                        if oneFruit["fruit"] == qualified_name:
                             self.bot.devil_fruits.append(
                                 DevilFruit(
-                                    name=fruit_metadata['name'],
-                                    format_name=fruit_metadata['format_name'],
+                                    name=fruit_metadata["name"],
+                                    format_name=fruit_metadata["format_name"],
                                     qualified_name=qualified_name,
                                     rarity=box_tier,
-                                    mod_data=oneFruit
+                                    mod_data=oneFruit,
                                 )
                             )
         self.bot.dispatch("game_data_read", game_data)

@@ -25,7 +25,7 @@ class PyBot(AutoShardedBot):
         super(PyBot, self).__init__(
             command_prefix=self.handle_prefix,
             intents=self.get_intents(),
-            tree_cls=Tree
+            tree_cls=Tree,
         )
 
     def load_config(self):
@@ -33,15 +33,19 @@ class PyBot(AutoShardedBot):
         if not config_file.exists():
             dist_config_file = Path("config_dist.toml")
             if not dist_config_file.exists():
-                self.logger.error("Could not find \"config_dist.toml\". Was it deleted?")
+                self.logger.error('Could not find "config_dist.toml". Was it deleted?')
             else:
                 with config_file.open("w+") as f:
                     f.write(dist_config_file.read_text())
-                    self.logger.warning("Config file was generated from \"config_dist.toml\"")
+                    self.logger.warning(
+                        'Config file was generated from "config_dist.toml"'
+                    )
                     self.logger.warning("Please set the required variables.")
             quit()
         self.config = Config(**load("config.toml"))
-        self.logger.debug("Successfully loaded configuration: " + dumps(self.config.json()))
+        self.logger.debug(
+            "Successfully loaded configuration: " + dumps(self.config.json())
+        )
 
     async def handle_prefix(self, bot, message):
         return self.config.bot.prefix
@@ -53,12 +57,7 @@ class PyBot(AutoShardedBot):
         client = AsyncIOMotorClient()
         await init_beanie(
             database=getattr(client, self.config.database.name),
-            document_models=[
-                Guild,
-                User,
-                Member,
-                Player
-            ]
+            document_models=[Guild, User, Member, Player],
         )
         self.logger.info("Database initialized")
 
@@ -68,17 +67,21 @@ class PyBot(AutoShardedBot):
             try:
                 module = Module.create(module)
             except FileNotFoundError as err:
-                self.logger.warning(f"Skipped loading module in \"{module}\": {err}")
+                self.logger.warning(f'Skipped loading module in "{module}": {err}')
                 continue
             self.modules.append(module)
         self.modules.sort(key=lambda x: x.info.priority)
-        self.logger.info(f"Found {len(self.modules)} modules. {', '.join([m.info.name for m in self.modules])}")
+        self.logger.info(
+            f"Found {len(self.modules)} modules. {', '.join([m.info.name for m in self.modules])}"
+        )
         for module in self.modules:
             if module.info.enabled:
                 await self.load_extension(module.spec)
                 self.logger.info(f"Loaded {module.info.name}")
             else:
-                self.logger.debug(f"Skipping '{module.info.name}' because it's disabled")
+                self.logger.debug(
+                    f"Skipping '{module.info.name}' because it's disabled"
+                )
         self.modules_ready.set()
         self.logger.info("Finished loading modules")
 

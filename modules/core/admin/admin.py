@@ -60,9 +60,13 @@ class Admin(commands.Cog):
     @is_bot_owners_interaction()
     async def rcon(self, interaction, command: str):
         rcon_config = self.bot.config.mineminenomi.rcon
-        with MCRcon(host=rcon_config.host, password=rcon_config.password, port=rcon_config.port) as rcon:
+        with MCRcon(
+            host=rcon_config.host, password=rcon_config.password, port=rcon_config.port
+        ) as rcon:
             response = rcon.command(f"/{command}")
-            await interaction.response.send_message(response or "Command ran successfully")
+            await interaction.response.send_message(
+                response or "Command ran successfully"
+            )
 
     @commands.hybrid_command(name="update", with_app_command=True)
     @commands.guild_only()

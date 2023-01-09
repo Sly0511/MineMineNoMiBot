@@ -1,0 +1,4 @@
+name = "Log Commands"
+description = "Commands to read server logs"
+enabled = true
+priority = 8

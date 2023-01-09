@@ -35,8 +35,12 @@ class NBTParser:
 
     @classmethod
     def convert_data_type(cls, data):
-        return cls.datatypes(data.get('type_id'))(data['value'])
+        return cls.datatypes(data.get("type_id"))(data["value"])
 
 
 def int_array_to_uuid(int_array: list) -> str:
-    return UUID("".join([str(hex(i + (2**32 if i < 0 else 0)))[2:].zfill(8) for i in int_array]))
+    return UUID(
+        "".join(
+            [str(hex(i + (2**32 if i < 0 else 0)))[2:].zfill(8) for i in int_array]
+        )
+    )

@@ -11,6 +11,7 @@ class FruitStatus(Enum):
     inventory = "INVENTORY"
     in_use = "IN_USE"
     lost = "LOST"
+    never_found = "NEVER_FOUND"
 
 
 class HistoryEntry(BaseModel):
@@ -55,4 +56,4 @@ class DevilFruit(BaseModel):
     mod_data: DevilFruitEntry
 
     def __repr__(self):
-        return f"<fruit=\"{self.format_name}\" history={len(self.mod_data.history)}>"
+        return f'<fruit="{self.format_name}" history={len(self.mod_data.history)}>'

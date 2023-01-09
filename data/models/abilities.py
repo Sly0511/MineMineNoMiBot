@@ -21,4 +21,4 @@ class Ability(BaseModel):
 
     @validator("id", always=True)
     def get_uuid(cls, value, values):
-        return value.split(':')[-1]
+        return value.split(":")[-1]
