@@ -1,0 +1,4 @@
+name = "Crew Commands"
+description = "Commands for crews"
+enabled = true
+priority = 8

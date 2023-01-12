@@ -61,7 +61,6 @@ class PlayerEvents(commands.Cog):
             player_entry = Player(
                 uuid=uuid,
                 name=username_cache.get(str(uuid), "Unknown"),
-                last_update=datetime.utcnow(),
                 stats={
                     "race": entity_stats["race"],
                     "sub_race": entity_stats["subRace"],

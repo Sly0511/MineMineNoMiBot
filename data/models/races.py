@@ -6,6 +6,7 @@ class Races(Enum):
     Cyborg = "cyborg"
     Mink = "mink"
     Fishman = "fishman"
+    NONE = ""
 
 
 class SubRaces(Enum):

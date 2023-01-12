@@ -6,3 +6,4 @@ class Factions(Enum):
     Marine = "marine"
     Revolutionary = "revolutionary"
     BountyHunter = "bounty_hunter"
+    NONE = ""

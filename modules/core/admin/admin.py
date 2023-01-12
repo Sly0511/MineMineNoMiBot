@@ -93,7 +93,7 @@ class Admin(commands.Cog):
         )
         await ctx.send(embed=e)
 
-    @commands.hybrid_command(name="load", with_app_command=False)
+    @commands.hybrid_command(name="reload", with_app_command=False)
     @commands.guild_only()
     @in_bot_admins()
     async def cmd_load_cog(self, ctx, name: str):

@@ -1,4 +1,4 @@
 name = "Command Events"
 description = "Handles the commands events"
-enabled = false
+enabled = true
 priority = 8

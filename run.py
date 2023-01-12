@@ -10,7 +10,7 @@ from toml import load
 
 from utils import Logger, Tree
 from utils.database.models import Config, Guild, Member, User
-from utils.database.models.mineminenomi import Player
+from utils.database.models.mineminenomi import Crew, Player
 from utils.modules import Module
 
 
@@ -54,7 +54,7 @@ class PyBot(AutoShardedBot):
         client = AsyncIOMotorClient()
         await init_beanie(
             database=getattr(client, self.config.database.name),
-            document_models=[Guild, User, Member, Player],
+            document_models=[Crew, Guild, User, Member, Player],
         )
         self.logger.info("Database initialized")
 

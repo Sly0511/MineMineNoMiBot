@@ -6,7 +6,7 @@ from discord import Embed, File, app_commands
 from discord.ext import commands
 
 from data.models import Factions, FightingStyles, Races
-from utils.database.models import Player
+from utils.database.models.mineminenomi import Player
 from utils.discord import CodeButton
 from utils.mineminenomi import run_rcon_command
 

@@ -51,12 +51,17 @@ class FightingStylesConfig(BaseModel):
     swordsman: int
 
 
+class CrewsConfig(BaseModel):
+    category: int
+
+
 class MineMinenoMiConfig(BaseModel):
     ftp: FTPConfig
     rcon: RconConfig
     races: RacesConfig
     factions: FactionsConfig
     fighting_styles: FightingStylesConfig
+    crews: CrewsConfig
 
 
 class Config(BaseModel):

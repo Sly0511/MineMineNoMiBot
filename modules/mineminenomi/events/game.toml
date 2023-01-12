@@ -1,0 +1,4 @@
+name = "Game Events"
+description = "Handle data from the game events"
+enabled = true
+priority = 8

@@ -49,6 +49,8 @@ def int_array_to_uuid(int_array: list) -> UUID:
 
 
 def run_rcon_command(bot, command):
+    if not getattr(bot, "server_status", False):
+        return
     config = bot.config.mineminenomi.rcon
     try:
         with MCRcon(
@@ -62,7 +64,7 @@ def run_rcon_command(bot, command):
                 return result
             if isinstance(command, list):
                 command = [
-                    cmd if cmd.startswith("/") else f"/{command}" for cmd in command
+                    cmd if cmd.startswith("/") else f"/{cmd}" for cmd in command
                 ]
                 results = [
                     rcon.command(cmd) or "Command successfully executed"

@@ -50,3 +50,6 @@
         doctor =         0
         sniper =         0
         swordsman =      0
+
+    [mineminenomi.crews]
+        category =       0

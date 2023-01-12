@@ -7,7 +7,7 @@ from pysftp import CnOpts, Connection
 from python_nbt.nbt import read_from_nbt_file
 
 from data.models import DevilFruit
-from utils.mineminenomi import NBTParser
+from utils.mineminenomi import NBTParser, run_rcon_command
 
 
 class FTPHandler:
@@ -31,6 +31,7 @@ class GameTasks(commands.Cog):
         self.player_cache_folder = self.cache_folder.joinpath("player")
         self.stats_cache_folder = self.cache_folder.joinpath("stats")
         self.logs_cache_folder = self.cache_folder.joinpath("logs")
+        self.bot.server_status = None
 
     async def cog_load(self):
         self.game_cache_folder.mkdir(parents=True, exist_ok=True)
@@ -38,6 +39,16 @@ class GameTasks(commands.Cog):
         self.stats_cache_folder.mkdir(parents=True, exist_ok=True)
         self.logs_cache_folder.mkdir(parents=True, exist_ok=True)
         self.retrieve_data.start()
+
+    def check_server_status(self):
+        was_first = self.bot.server_status is None
+        status = bool(run_rcon_command(self.bot, "list"))
+        if self.bot.server_status == status:
+            return
+        self.bot.server_status = status
+        self.bot.logger.warning("Server is " + ("online" if self.bot.server_status else "offline"))
+        if not was_first:
+            self.bot.dispatch("server_status", self.bot.server_status)
 
     async def cog_unload(self):
         self.retrieve_data.cancel()
@@ -126,6 +137,7 @@ class GameTasks(commands.Cog):
     @tasks.loop(seconds=60)
     async def retrieve_data(self):
         await self.bot.wait_until_ready()
+        self.check_server_status()
         await self.download_data()
         await self.game_data()
         await self.player_data()
@@ -172,7 +184,7 @@ class GameTasks(commands.Cog):
                                     mod_data=oneFruit,
                                 )
                             )
-        self.bot.dispatch("game_data_read", game_data)
+        self.bot.dispatch("game_data_read", game_data["data"])
 
     async def player_data(self):
         players = []

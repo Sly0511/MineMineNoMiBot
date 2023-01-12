@@ -1,0 +1,4 @@
+name = "Crew tasks"
+description = "Handle tasks for crews"
+enabled = true
+priority = 8

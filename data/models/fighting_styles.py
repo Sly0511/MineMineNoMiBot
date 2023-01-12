@@ -8,3 +8,4 @@ class FightingStyles(Enum):
     Sniper = "sniper"
     Doctor = "doctor"
     ArtofWeather = "art_of_weather"
+    NONE = ""
