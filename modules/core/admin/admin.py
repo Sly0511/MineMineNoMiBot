@@ -3,12 +3,11 @@ import re
 import traceback
 from datetime import datetime
 
-from discord import Embed, File, Object, app_commands
+from discord import Embed, File, Object
 from discord.ext import commands
 
-from utils.checks import in_bot_admins, in_bot_owners, is_bot_owners_interaction
+from utils.checks import in_bot_admins, in_bot_owners
 from utils.discord import Traceback
-from utils.mineminenomi import run_rcon_command
 
 
 class Admin(commands.Cog):
@@ -57,12 +56,6 @@ class Admin(commands.Cog):
             )
             view = Traceback(ctx, built_error)
             await ctx.send(content="An error occured.", view=view)
-
-    @app_commands.command(name="rcon", description="Run a console command.")
-    @commands.guild_only()
-    @is_bot_owners_interaction()
-    async def rcon(self, interaction, command: str):
-        await interaction.response.send_message(run_rcon_command(self.bot, command))
 
     @commands.hybrid_command(name="update", with_app_command=True)
     @commands.guild_only()

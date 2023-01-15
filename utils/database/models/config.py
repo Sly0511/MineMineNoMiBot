@@ -28,6 +28,10 @@ class RconConfig(BaseModel):
     password: str
 
 
+class DevilFruitsConfig(BaseModel):
+    panel_channel: int
+
+
 class RacesConfig(BaseModel):
     cyborg: int
     fishman: int
@@ -58,6 +62,7 @@ class CrewsConfig(BaseModel):
 class MineMinenoMiConfig(BaseModel):
     ftp: FTPConfig
     rcon: RconConfig
+    devil_fruits: DevilFruitsConfig
     races: RacesConfig
     factions: FactionsConfig
     fighting_styles: FightingStylesConfig

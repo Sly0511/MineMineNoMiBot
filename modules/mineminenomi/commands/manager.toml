@@ -1,0 +1,4 @@
+name = "Manager Commands"
+description = "Commands to manage server"
+enabled = true
+priority = 8

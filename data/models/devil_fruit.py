@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional, Union
 from uuid import UUID
 
-from pydantic import BaseModel, validate_arguments, validator
+from pydantic import BaseModel, validator
 
 from utils.mineminenomi import int_array_to_uuid
 

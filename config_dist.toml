@@ -31,6 +31,9 @@
         port = 30130
         password = "password"
 
+    [mineminenomi.devil_fruits]
+        panel_channel =  0
+
     [mineminenomi.races]
         cyborg =         0
         fishman =        0

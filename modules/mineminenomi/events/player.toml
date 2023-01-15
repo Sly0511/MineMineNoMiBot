@@ -1,4 +1,0 @@
-name = "Player Events"
-description = "Handle data from the player events"
-enabled = true
-priority = 8
