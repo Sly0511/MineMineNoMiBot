@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from beanie import before_event, Document, Indexed, Insert, Link, Replace, SaveChanges, Update
+from beanie import Document, Indexed, Insert, Link, Replace, SaveChanges, Update, before_event
 from pydantic import BaseModel
 
 from data.models import Ability, DevilFruit, Factions, FightingStyles, Races, SubRaces

@@ -1,6 +1,7 @@
-from discord.ext import commands, tasks
-from utils.database.models.mineminenomi import Crew, Player
 from discord import PermissionOverwrite
+from discord.ext import commands, tasks
+
+from utils.database.models.mineminenomi import Crew, Player
 
 
 class CrewTasks(commands.Cog):
@@ -23,9 +24,7 @@ class CrewTasks(commands.Cog):
         async for crew in Crew.find_many():
             if crew.disbanded:
                 if not any(
-                    (crew.discord_data.role_id,
-                    crew.discord_data.text_channel_id,
-                    crew.discord_data.voice_channel_id)
+                    (crew.discord_data.role_id, crew.discord_data.text_channel_id, crew.discord_data.voice_channel_id)
                 ):
                     continue
                 if role := guild.get_role(crew.discord_data.role_id):
@@ -40,9 +39,7 @@ class CrewTasks(commands.Cog):
                 await crew.save()
                 continue
             if not all(
-                (crew.discord_data.role_id,
-                crew.discord_data.text_channel_id,
-                crew.discord_data.voice_channel_id)
+                (crew.discord_data.role_id, crew.discord_data.text_channel_id, crew.discord_data.voice_channel_id)
             ):
                 role = guild.get_role(crew.discord_data.role_id)
                 if role:
@@ -58,15 +55,15 @@ class CrewTasks(commands.Cog):
                     name=crew.name,
                     overwrites={
                         guild.default_role: PermissionOverwrite(read_messages=False),
-                        role: PermissionOverwrite(read_messages=True)
-                    }
+                        role: PermissionOverwrite(read_messages=True),
+                    },
                 )
                 voice_channel = await category.create_voice_channel(
                     name=crew.name,
                     overwrites={
                         guild.default_role: PermissionOverwrite(view_channel=False),
-                        role: PermissionOverwrite(view_channel=True)
-                    }
+                        role: PermissionOverwrite(view_channel=True),
+                    },
                 )
                 crew.discord_data.role_id = role.id
                 crew.discord_data.text_channel_id = text_channel.id
@@ -76,7 +73,11 @@ class CrewTasks(commands.Cog):
             members = [
                 crewmate.user.user_id
                 for member in crew.members
-                if (crewmate := await Player.find_one(Player.uuid == member.id and Player.user != None, fetch_links=True))
+                if (
+                    crewmate := await Player.find_one(
+                        Player.uuid == member.id and Player.user != None, fetch_links=True
+                    )
+                )
             ]
             for member in members:
                 user = guild.get_member(member)

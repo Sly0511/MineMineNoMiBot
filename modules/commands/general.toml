@@ -1,0 +1,4 @@
+name = "General Commands"
+description = "Commands for general purpose and use"
+enabled = true
+priority = 8

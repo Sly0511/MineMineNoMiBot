@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, Union
 from uuid import UUID
 
-from beanie import before_event, Document, Indexed, Insert, Replace, SaveChanges, Update
+from beanie import Document, Indexed, Insert, Replace, SaveChanges, Update, before_event
 from pydantic import BaseModel, validator
 
 from utils.mineminenomi import int_array_to_uuid

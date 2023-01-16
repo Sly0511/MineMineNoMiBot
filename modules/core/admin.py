@@ -15,7 +15,6 @@ class Admin(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="parse", with_app_command=False)
-    @commands.guild_only()
     @in_bot_owners()
     async def cmd_parse(self, ctx):
         """Parse a bit of code as a command."""
@@ -51,14 +50,11 @@ class Admin(commands.Cog):
 
             await locals()["__eval_function__"]()
         except Exception as error:
-            built_error = "".join(
-                traceback.format_exception(type(error), error, error.__traceback__)
-            )
+            built_error = "".join(traceback.format_exception(type(error), error, error.__traceback__))
             view = Traceback(ctx, built_error)
             await ctx.send(content="An error occured.", view=view)
 
-    @commands.hybrid_command(name="update", with_app_command=True)
-    @commands.guild_only()
+    @commands.hybrid_command(name="update", with_app_command=False)
     @in_bot_owners()
     async def cmd_update(self, ctx):
         guild = Object(id=self.bot.config.bot.server)
@@ -67,7 +63,6 @@ class Admin(commands.Cog):
         await ctx.send("Slash commands were synced!")
 
     @commands.hybrid_command(name="modules", with_app_command=False)
-    @commands.guild_only()
     @in_bot_admins()
     async def cmd_list_cog(self, ctx):
         modules, loaded, unloaded = list(self.bot.get_modules())
@@ -87,7 +82,6 @@ class Admin(commands.Cog):
         await ctx.send(embed=e)
 
     @commands.hybrid_command(name="reload", with_app_command=False)
-    @commands.guild_only()
     @in_bot_admins()
     async def cmd_load_cog(self, ctx, name: str):
         modules, loaded, unloaded = list(self.bot.get_modules())
@@ -107,7 +101,6 @@ class Admin(commands.Cog):
                         await ctx.send(f"Couldn't reload `{module.spec}`: ```{err}```")
 
     @commands.hybrid_command(name="unload", with_app_command=False)
-    @commands.guild_only()
     @in_bot_admins()
     async def cmd_unload_cog(self, ctx, name: str):
         modules, loaded, unloaded = list(self.bot.get_modules())

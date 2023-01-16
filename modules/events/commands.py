@@ -8,9 +8,7 @@ class CommandsEvents(commands.Cog):
 
     @commands.Cog.listener("on_command")
     async def on_command_event(self, ctx):
-        self.bot.logger.info(
-            f"{ctx.author} used command \"{ctx.command}\""
-        )
+        self.bot.logger.info(f'{ctx.author} used command "{ctx.command}"')
 
     @commands.Cog.listener("on_command_error")
     async def on_command_error_event(self, ctx, error: commands.errors.CommandInvokeError):

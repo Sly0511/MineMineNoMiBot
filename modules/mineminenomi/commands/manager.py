@@ -9,7 +9,6 @@ class ManagerCommands(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="rcon", description="Run a console command.")
-    @commands.guild_only()
     @is_bot_owners_interaction()
     async def rcon(self, interaction, command: str):
         await interaction.response.send_message(run_rcon_command(self.bot, command))

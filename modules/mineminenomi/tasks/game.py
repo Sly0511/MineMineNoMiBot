@@ -8,8 +8,8 @@ from pysftp import CnOpts, Connection
 from python_nbt.nbt import read_from_nbt_file
 
 from data.models import DevilFruit, DevilFruitRarity, FruitStatus
-from utils.mineminenomi import NBTParser, run_rcon_command
 from utils import chunks
+from utils.mineminenomi import NBTParser, run_rcon_command
 
 
 class FTPHandler:
@@ -66,9 +66,7 @@ class GameTasks(commands.Cog):
                     "usernamecache.json",
                     self.game_cache_folder.joinpath("usernamecache.json"),
                 )
-                self.bot.logger.debug(
-                    "Downloaded 'usernamecache.json' from the server."
-                )
+                self.bot.logger.debug("Downloaded 'usernamecache.json' from the server.")
             with sftp.cd("World/data/"):
                 sftp.get(
                     "mineminenomi.dat",
@@ -83,17 +81,12 @@ class GameTasks(commands.Cog):
                     local_file = self.player_cache_folder.joinpath(filepath.name)
                     if local_file.exists():
                         if (
-                            time - timedelta(minutes=5)
-                            > datetime.utcfromtimestamp(file.st_mtime)
+                            time - timedelta(minutes=5) > datetime.utcfromtimestamp(file.st_mtime)
                             and local_file.stat().st_size == file.st_size
                         ):
                             continue
-                    sftp.get(
-                        filepath.name, self.player_cache_folder.joinpath(filepath.name)
-                    )
-                    self.bot.logger.debug(
-                        f"Downloaded '{filepath.name}' from the server."
-                    )
+                    sftp.get(filepath.name, self.player_cache_folder.joinpath(filepath.name))
+                    self.bot.logger.debug(f"Downloaded '{filepath.name}' from the server.")
             with sftp.cd("World/stats/"):
                 for file in sftp.listdir_attr():
                     filepath = Path(file.filename)
@@ -102,41 +95,27 @@ class GameTasks(commands.Cog):
                     local_file = self.stats_cache_folder.joinpath(filepath.name)
                     if local_file.exists():
                         if (
-                            time - timedelta(minutes=5)
-                            > datetime.utcfromtimestamp(file.st_mtime)
+                            time - timedelta(minutes=5) > datetime.utcfromtimestamp(file.st_mtime)
                             and local_file.stat().st_size == file.st_size
                         ):
                             continue
-                    sftp.get(
-                        filepath.name, self.stats_cache_folder.joinpath(filepath.name)
-                    )
-                    self.bot.logger.debug(
-                        f"Downloaded '{filepath.name}' from the server."
-                    )
+                    sftp.get(filepath.name, self.stats_cache_folder.joinpath(filepath.name))
+                    self.bot.logger.debug(f"Downloaded '{filepath.name}' from the server.")
             with sftp.cd("logs/"):
                 for file in sftp.listdir_attr():
                     filepath = Path(file.filename)
                     local_file = self.logs_cache_folder.joinpath(filepath.name)
-                    local_log_file = self.logs_cache_folder.joinpath(
-                        filepath.name
-                    ).with_suffix("")
-                    if local_log_file.exists() or (
-                        filepath.suffix == ".gz" and filepath.stem.startswith("debug")
-                    ):
+                    local_log_file = self.logs_cache_folder.joinpath(filepath.name).with_suffix("")
+                    if local_log_file.exists() or (filepath.suffix == ".gz" and filepath.stem.startswith("debug")):
                         continue
                     if local_file.exists():
                         if (
-                            time - timedelta(minutes=5)
-                            > datetime.utcfromtimestamp(file.st_mtime)
+                            time - timedelta(minutes=5) > datetime.utcfromtimestamp(file.st_mtime)
                             and local_file.stat().st_size == file.st_size
                         ):
                             continue
-                    sftp.get(
-                        filepath.name, self.logs_cache_folder.joinpath(filepath.name)
-                    )
-                    self.bot.logger.debug(
-                        f"Downloaded '{filepath.name}' from the server."
-                    )
+                    sftp.get(filepath.name, self.logs_cache_folder.joinpath(filepath.name))
+                    self.bot.logger.debug(f"Downloaded '{filepath.name}' from the server.")
 
     @tasks.loop(seconds=60)
     async def retrieve_data(self):
@@ -154,10 +133,7 @@ class GameTasks(commands.Cog):
         game_data = NBTParser.parse(game_data)
         self.bot.devil_fruits = []
         devil_fruits_data = load(Path("data/fruits.json").open())
-        one_fruits = {
-            oneFruit["fruit"]: oneFruit
-            for oneFruit in game_data["data"]["oneFruitList"]
-        }
+        one_fruits = {oneFruit["fruit"]: oneFruit for oneFruit in game_data["data"]["oneFruitList"]}
         for box_tier, fruits in devil_fruits_data.items():
             for fruit in fruits:
                 for qualified_name, fruit_metadata in fruit.items():
@@ -199,7 +175,6 @@ class GameTasks(commands.Cog):
             players.append(NBTParser.parse(player_data))
         self.bot.dispatch("player_data_read", players)
 
-
     @tasks.loop(seconds=60)
     async def devil_fruit_panel(self):
         await self.bot.wait_until_ready()
@@ -216,21 +191,18 @@ class GameTasks(commands.Cog):
                 i=str(emojis[DevilFruitRarity.IRON]),
                 w=str(emojis[DevilFruitRarity.WOODEN]),
             ),
-            color=0xffd400,
+            color=0xFFD400,
             timestamp=datetime.utcnow(),
         )
         available_fruits = [
             f"{emojis[fruit.rarity]} {fruit.format_name}"
             for fruit in sorted(
-                self.bot.devil_fruits, key=lambda x: [
-                        (
-                            DevilFruitRarity.GOLDEN,
-                            DevilFruitRarity.IRON,
-                            DevilFruitRarity.WOODEN
-                        ).index(x.rarity),
-                        x.format_name
-                    ]
-                )
+                self.bot.devil_fruits,
+                key=lambda x: [
+                    (DevilFruitRarity.GOLDEN, DevilFruitRarity.IRON, DevilFruitRarity.WOODEN).index(x.rarity),
+                    x.format_name,
+                ],
+            )
             if fruit.mod_data.status in (FruitStatus.never_found, FruitStatus.lost)
         ]
         available_fruits = chunks(available_fruits, 8)
@@ -240,7 +212,7 @@ class GameTasks(commands.Cog):
             e.add_field(
                 name="\u200b",
                 value="\n".join(fruits),
-            )                
+            )
         e.set_footer(text="Updates every 5 minutes | Last updated")
         channel = self.bot.get_channel(self.bot.config.mineminenomi.devil_fruits.panel_channel)
         if not channel:

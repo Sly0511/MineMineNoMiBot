@@ -21,9 +21,7 @@ class PlayerEvents(commands.Cog):
         self.manage_roles.start()
 
     def get_online_players(self):
-        if self.online_players["last_update"] < datetime.utcnow() - timedelta(
-            seconds=30
-        ):
+        if self.online_players["last_update"] < datetime.utcnow() - timedelta(seconds=30):
             result = run_rcon_command(self.bot, "list")
             if not result:
                 return
@@ -44,8 +42,7 @@ class PlayerEvents(commands.Cog):
             eaten_devil_fruits = [
                 df
                 for df in self.bot.devil_fruits
-                if df.qualified_name == devil_fruit["devilFruit"]
-                or devil_fruit["hasYamiPower"]
+                if df.qualified_name == devil_fruit["devilFruit"] or devil_fruit["hasYamiPower"]
             ]
             inventory_devil_fruits = [
                 df
@@ -61,7 +58,6 @@ class PlayerEvents(commands.Cog):
             player_entry = Player(
                 uuid=uuid,
                 name=username_cache.get(str(uuid), "Unknown"),
-                last_update=datetime.utcnow(),
                 stats={
                     "race": entity_stats["race"],
                     "sub_race": entity_stats["subRace"],
@@ -82,11 +78,11 @@ class PlayerEvents(commands.Cog):
                     "abilities": ability_data["unlocked_abilities"],
                 },
             )
-            # print([df.mod_data.status for df in self.bot.devil_fruits if df.mod_data.status != FruitStatus.lost])
             if player_db := await Player.find_one(Player.uuid == uuid):
                 player_entry.id = player_db.id
                 player_entry.user = player_db.user
-                await player_entry.replace()
+                if player_db != player_entry:
+                    await player_entry.replace()
             else:
                 self.bot.logger.info(f"New player found - {player_entry.name}")
                 await player_entry.insert()
@@ -113,12 +109,8 @@ class PlayerEvents(commands.Cog):
                                     "save-all",
                                 ]
                                 if not run_rcon_command(self.bot, cmds):
-                                    return self.bot.logger.error(
-                                        "Failed to give ability."
-                                    )
-                                self.bot.logger.info(
-                                    f"Gave {awarded_ability['name']} to {player.name}"
-                                )
+                                    return self.bot.logger.error("Failed to give ability.")
+                                self.bot.logger.info(f"Gave {awarded_ability['name']} to {player.name}")
                     else:
                         for awarded_ability in ability["awarded"]:
                             if awarded_ability["name"] in player_abilities:
@@ -127,53 +119,35 @@ class PlayerEvents(commands.Cog):
                                     "save-all",
                                 ]
                                 if not run_rcon_command(self.bot, cmds):
-                                    return self.bot.logger.error(
-                                        "Failed to give ability."
-                                    )
-                                self.bot.logger.info(
-                                    f"Removed {awarded_ability['name']} from {player.name}"
-                                )
+                                    return self.bot.logger.error("Failed to give ability.")
+                                self.bot.logger.info(f"Removed {awarded_ability['name']} from {player.name}")
             else:
                 for ability in abilities:
                     for awarded_ability in ability["awarded"]:
                         if awarded_ability["name"] in player_abilities:
                             if awarded_ability["fruit"] not in [
-                                df.qualified_name
-                                for df in player.stats.eaten_devil_fruits
+                                df.qualified_name for df in player.stats.eaten_devil_fruits
                             ]:
                                 cmds = [
                                     f"ability remove mineminenomi:{awarded_ability['name']} {player.name}",
                                     "save-all",
                                 ]
                                 if not run_rcon_command(self.bot, cmds):
-                                    return self.bot.logger.error(
-                                        "Failed to remove ability - No Fruit"
-                                    )
-                                self.bot.logger.info(
-                                    f"Removed {awarded_ability['name']} from {player.name} | No Fruit"
-                                )
+                                    return self.bot.logger.error("Failed to remove ability - No Fruit")
+                                self.bot.logger.info(f"Removed {awarded_ability['name']} from {player.name} | No Fruit")
 
     @tasks.loop(minutes=1)
     async def manage_roles(self):
         await self.bot.wait_until_ready()
         guild = self.bot.get_guild(self.bot.config.bot.server)
         for member in guild.members:
-            player = await Player.find_one(
-                Player.user.user_id == member.id, fetch_links=True
-            )
-            roles = {
-                key: guild.get_role(value)
-                for key, value in self.bot.config.mineminenomi.races.dict().items()
-            }
+            player = await Player.find_one(Player.user.user_id == member.id, fetch_links=True)
+            roles = {key: guild.get_role(value) for key, value in self.bot.config.mineminenomi.races.dict().items()}
             await self.manage_races(roles, member, player)
-            roles = {
-                key: guild.get_role(value)
-                for key, value in self.bot.config.mineminenomi.factions.dict().items()
-            }
+            roles = {key: guild.get_role(value) for key, value in self.bot.config.mineminenomi.factions.dict().items()}
             await self.manage_factions(roles, member, player)
             roles = {
-                key: guild.get_role(value)
-                for key, value in self.bot.config.mineminenomi.fighting_styles.dict().items()
+                key: guild.get_role(value) for key, value in self.bot.config.mineminenomi.fighting_styles.dict().items()
             }
             await self.manage_fighting_styles(roles, member, player)
 

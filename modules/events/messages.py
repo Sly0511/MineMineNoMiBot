@@ -22,10 +22,12 @@ class MessageEvents(commands.Cog):
             await self.process_command(ctx.message)
 
     async def can_run(self, ctx: commands.Context) -> bool:
+        if ctx.author.id in self.bot.config.bot.owners:
+            return True
         if ctx.author.bot:
             return False
-        # if ctx.author.id in self.bot.config.bot.owners:
-        #     return False
+        if ctx.guild is None:
+            return False
         if ctx.author.id in self.bot.config.bot.blacklist:
             return False
         return True
@@ -35,18 +37,12 @@ class MessageEvents(commands.Cog):
             guild = await Guild(guild_id=ctx.guild.id).insert()
         if not (user := await User.find_one(User.user_id == ctx.author.id)):
             user = await User(user_id=ctx.author.id).insert()
-        if not (
-            member := await Member.find_one(
-                Member.guild_id == ctx.guild.id and Member.user_id == ctx.author.id
-            )
-        ):
-            member = await Member(
-                guild_id=ctx.guild.id, user_id=ctx.author.id, user=user, guild=guild
-            ).insert()
+        if not (member := await Member.find_one(Member.guild_id == ctx.guild.id and Member.user_id == ctx.author.id)):
+            member = await Member(guild_id=ctx.guild.id, user_id=ctx.author.id, user=user, guild=guild).insert()
         return guild, user, member
 
     async def process_command(self, message):
-        guild, user, member = await self.ensure_database(message)
+        await self.ensure_database(message)
         await self.bot.process_commands(message)
 
 

@@ -12,7 +12,7 @@ class CrewCommands(commands.Cog):
     async def crews_cmd(self, ctx):
         ...
 
-    @crews_cmd.command(name="list")
+    @crews_cmd.command(name="list", description="List all the crews in the server.")
     async def crews_list(self, ctx):
         e = Embed(title="List of crews", description="")
         crews = Crew.find_many(Crew.disbanded == False)
@@ -24,7 +24,7 @@ class CrewCommands(commands.Cog):
         )
         await ctx.send(embed=e)
 
-    @crews_cmd.command(name="check")
+    @crews_cmd.command(name="check", description="Check a crew's members and captain.")
     async def crews_check(self, ctx, crew_name):
         crew = await Crew.find_one(Crew.name == crew_name and Crew.disbanded == False)
         captain = get(crew.members, isCaptain=True)
